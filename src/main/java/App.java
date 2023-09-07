@@ -58,9 +58,8 @@ public class App {
             server.start();
         }
         else if (args[0].equals("client")){
-
             var gateway= new HttpGateway();
-            HttpsURLConnection connection  = (HttpsURLConnection) gateway.getConnection("https://localhost:8888/test", null);
+            HttpsURLConnection connection  = gateway.getConnection("https://localhost:8888/test", null);
             byte[] bytes = connection.getInputStream().readAllBytes();
             System.out.println(new String(bytes));
         }

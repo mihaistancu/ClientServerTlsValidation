@@ -1,0 +1,23 @@
+### IntelliJ IDEA ###
+.idea
+*.iws
+*.iml
+*.ipr
+
+.settings/
+**/target/
+**/.classpath
+**/.project
+**/.settings/
+
+.project
+/ap/*.cer
+/ap/*.jks
+/ap/*.yaml
+**/log/
+
+*.pfx
+*.p12
+*.jks
+*.cer
+*.key

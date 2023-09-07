@@ -12,7 +12,7 @@ public class HttpGateway {
 //
         HttpsURLConnection connection = (HttpsURLConnection) Channel.getUrlConnection(destination);
 //        connection.setSSLSocketFactory(sslContext.getSocketFactory());
-        Channel.setRequestMethod(connection, "POST");
+        Channel.setRequestMethod(connection, "GET");
         connection.setDoInput(true);
         connection.setDoOutput(true);
         return connection;

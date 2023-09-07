@@ -64,7 +64,7 @@ public class JettyServerBuilder {
             Tls.initialize(sslContext, keyManagers, trustManagers);
 
             sslContextFactory.setSslContext(sslContext);
-            sslContextFactory.setNeedClientAuth(true);
+            //sslContextFactory.setNeedClientAuth(true);
 
             SslConnectionFactory tls = new SslConnectionFactory(sslContextFactory, http11.getProtocol());
 
