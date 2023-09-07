@@ -14,7 +14,10 @@ import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 
 import java.io.IOException;
 import java.math.BigInteger;
-import java.security.*;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.NoSuchAlgorithmException;
+import java.security.PublicKey;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Calendar;
@@ -23,12 +26,12 @@ import java.util.Random;
 
 public class CertificateChainFactory {
 
-    public static X509Certificate generateCertificate(String cn, KeyPair keyPair, X509Certificate issuerCertificate, PrivateKey issuerKey, boolean isCaCertificate, Extension... extensions) {
+    public static X509Certificate generateCertificate(String cn, KeyPair keyPair, String issuerCN, KeyPair issuerKeyPair, boolean isCaCertificate, Extension... extensions) {
         try {
             return issueCertificate(
-                    issuerCertificate,
-                    new X500Name(cn),
-                    issuerKey,
+                    issuerCN,
+                    cn,
+                    issuerKeyPair,
                     keyPair,
                     isCaCertificate,
                     2023, extensions);
@@ -37,16 +40,7 @@ public class CertificateChainFactory {
         }
     }
 
-    public static Extension createExtendedKeyUsage() throws IOException {
-        // Create an ExtendedKeyUsage extension for Server and Client Authentication
-        KeyPurposeId serverAuthPurpose = KeyPurposeId.id_kp_serverAuth;
-        KeyPurposeId clientAuthPurpose = KeyPurposeId.id_kp_clientAuth;
-        ExtendedKeyUsage extendedKeyUsage = new ExtendedKeyUsage(new KeyPurposeId[] {serverAuthPurpose,clientAuthPurpose});
-        ASN1Sequence seq = ASN1Sequence.getInstance(extendedKeyUsage.toASN1Primitive());
-        return new Extension(Extension.extendedKeyUsage, false, seq.getEncoded());
-    }
-
-    public static X509Certificate issueCertificate(X509Certificate issuerCertificate, X500Name subjectDN, PrivateKey issuerKey,
+    public static X509Certificate issueCertificate(String issuerCN, String cn, KeyPair issuerKeyPair,
             KeyPair issuedKeyPair, boolean isCACertificate, int validityYear, Extension... extensions) throws
             NoSuchAlgorithmException,
             OperatorCreationException,
@@ -54,8 +48,8 @@ public class CertificateChainFactory {
             CertificateException {
 
         BigInteger serialNumber = new BigInteger(512, new Random()); //
-        X500Name issuerDN = new X500Name(issuerCertificate.getSubjectX500Principal().getName());
-        // X500Name subjectDN = new X500Name("CN=issued");
+        X500Name issuerDN = new X500Name(issuerCN);
+        X500Name subjectDN = new X500Name(cn);
         Date notBefore = new Date();
         Calendar cal = Calendar.getInstance();
         cal.add(Calendar.YEAR, validityYear);
@@ -78,12 +72,13 @@ public class CertificateChainFactory {
                 subjectPublicKey);
 
         // Authority Key Identifier
-        AuthorityKeyIdentifier authorityKeyIdentifier = createAuthorityKeyIdentifier(issuerCertificate.getPublicKey());
+        AuthorityKeyIdentifier authorityKeyIdentifier = createAuthorityKeyIdentifier(issuerKeyPair.getPublic());
         certificateGenerator.addExtension(Extension.authorityKeyIdentifier, false, authorityKeyIdentifier);
 
         // Subject Key Identifier
         SubjectKeyIdentifier subjectKeyIdentifier = createSubjectKeyIdentifier(keyPair.getPublic());
         certificateGenerator.addExtension(Extension.subjectKeyIdentifier, false, subjectKeyIdentifier);
+
 
         // Basic Constraints
         certificateGenerator.addExtension(Extension.basicConstraints, true, new BasicConstraints(isCACertificate)); // last value corresponds to
@@ -96,7 +91,7 @@ public class CertificateChainFactory {
         }
 
         X509CertificateHolder certHolder = certificateGenerator
-                .build(new JcaContentSignerBuilder("SHA256WithRSAEncryption").build(issuerKey));
+                .build(new JcaContentSignerBuilder("SHA256WithRSAEncryption").build(issuerKeyPair.getPrivate()));
 
         return new JcaX509CertificateConverter().getCertificate(certHolder);
     }
@@ -113,5 +108,25 @@ public class CertificateChainFactory {
         final DigestCalculator digCalc = new BcDigestCalculatorProvider().get(new AlgorithmIdentifier(OIWObjectIdentifiers.idSHA1));
 
         return new X509ExtensionUtils(digCalc).createSubjectKeyIdentifier(publicKeyInfo);
+    }
+
+    public static Extension createExtendedKeyUsage() throws IOException {
+        // Create an ExtendedKeyUsage extension for Server and Client Authentication
+        KeyPurposeId serverAuthPurpose = KeyPurposeId.id_kp_serverAuth;
+        KeyPurposeId clientAuthPurpose = KeyPurposeId.id_kp_clientAuth;
+        ExtendedKeyUsage extendedKeyUsage = new ExtendedKeyUsage(new KeyPurposeId[] {serverAuthPurpose,clientAuthPurpose});
+        ASN1Sequence seq = ASN1Sequence.getInstance(extendedKeyUsage.toASN1Primitive());
+        return new Extension(Extension.extendedKeyUsage, false, seq.getEncoded());
+    }
+
+    public static Extension createSubjectAlternativeNames() throws IOException {
+        GeneralName[] sanEntries = new GeneralName[]{
+                new GeneralName(GeneralName.dNSName, "localhost")
+                //new GeneralName(GeneralName.iPAddress, "192.168.1.1"),
+                // Add more SAN entries as needed
+        };
+
+        GeneralNames subjectAltNames = new GeneralNames(sanEntries);
+        return new Extension(Extension.subjectAlternativeName, false, subjectAltNames.getEncoded());
     }
 }

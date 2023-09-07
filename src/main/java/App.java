@@ -17,21 +17,32 @@ public class App {
         if (args[0].equals("server")) {
 
             KeyPair rootKeyPair = CertificateFactory.generateKeyPair();
-            X509Certificate root = CertificateFactory.generateCertificate(rootKeyPair);
+            X509Certificate root = CertificateChainFactory.generateCertificate(
+                    "CN=root",
+                    rootKeyPair,
+                    "CN=root",
+                    rootKeyPair,
+                    true);
             FileSystem.write("root.cer", root.getEncoded());
 
             KeyPair intermediateKeyPair = CertificateFactory.generateKeyPair();
-            X509Certificate intermediate = CertificateChainFactory.generateCertificate("CN=intermediate", intermediateKeyPair, root, rootKeyPair.getPrivate(), true);
+            X509Certificate intermediate = CertificateChainFactory.generateCertificate(
+                    "CN=intermediate",
+                    intermediateKeyPair,
+                    "CN=root",
+                    rootKeyPair,
+                    true);
             FileSystem.write("intermediate.cer", intermediate.getEncoded());
 
             KeyPair leafKeyPair = CertificateFactory.generateKeyPair();
             X509Certificate leaf = CertificateChainFactory.generateCertificate(
                     "CN=localhost",
                     leafKeyPair,
-                    intermediate,
-                    intermediateKeyPair.getPrivate(),
+                    "CN=intermediate",
+                    intermediateKeyPair,
                     false,
-                    CertificateChainFactory.createExtendedKeyUsage());
+                    CertificateChainFactory.createExtendedKeyUsage(),
+                    CertificateChainFactory.createSubjectAlternativeNames());
             FileSystem.write("leaf.cer", leaf.getEncoded());
 
             var keyStorePassPair = new KeyStorePassPair();
