@@ -3,7 +3,7 @@
     <option name="MAIN_CLASS_NAME" value="App" />
     <module name="ClientServerTlsValidation" />
     <option name="PROGRAM_PARAMETERS" value="client " />
-    <option name="VM_PARAMETERS" value="-Djavax.net.ssl.trustStore=trusted.jks -Djavax.net.ssl.trustStorePassword=password" />
+    <option name="VM_PARAMETERS" value="-Djavax.net.ssl.trustStore=client-trust-store.jks -Djavax.net.ssl.trustStorePassword=password" />
     <method v="2">
       <option name="Make" enabled="true" />
     </method>

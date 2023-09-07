@@ -7,7 +7,6 @@ import org.eclipse.jetty.util.ssl.SslContextFactory;
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
-import javax.net.ssl.TrustManager;
 import java.security.KeyStore;
 import java.util.ArrayList;
 import java.util.List;
@@ -59,12 +58,12 @@ public class JettyServerBuilder {
             Keys.initialize(keyManagerFactory, keyStore, keyStorePassword.toCharArray());
             KeyManager[] keyManagers = keyManagerFactory.getKeyManagers();
 
-            TrustManager[] trustManagers = new TrustManager[]{new TrustAllTrustManager()};
+            //TrustManager[] trustManagers = new TrustManager[]{new TrustAllTrustManager()};
 
-            Tls.initialize(sslContext, keyManagers, trustManagers);
+            Tls.initialize(sslContext, keyManagers, null);
 
             sslContextFactory.setSslContext(sslContext);
-            //sslContextFactory.setNeedClientAuth(true);
+            sslContextFactory.setNeedClientAuth(true);
 
             SslConnectionFactory tls = new SslConnectionFactory(sslContextFactory, http11.getProtocol());
 
